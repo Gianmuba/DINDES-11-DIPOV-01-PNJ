@@ -1,0 +1,417 @@
+---
+title: "DINDES-11-DIPOV-01-PNJ - POBLACIÓN JOVEN ENTRE 18 Y 29 AÑOS QUE SE HA SENTIDO MALTRATADA, O HAN INTENTADO DISCRIMINARLA EN LUGARES O SITUACIONES" 
+author: "Dirección de Investigación y Desarrollo (DINDES) de la Secretaría Nacional de Juventud (SENAJU). Especialistas a cargo: Gianmarco Muñoz Bazán & Manuel Vargas de la Torre"
+date: "2023-05-24" 
+output:
+  html_document: 
+      toc: yes 
+      toc_depth: 3 
+      toc_float: yes 
+      collapsed: yes 
+      smooth_scroll: yes 
+      theme: journal 
+      highlight: kate 
+      df_print: paged 
+      code_folding: show 
+--- 
+# MODELADO DE BASE DATO 
+## PAQUETES ESTADÍSTICOS 
+```{r message=FALSE, warning=FALSE} 
+library(openxlsx) 
+library(rmarkdown) 
+library(tidyverse) 
+library(haven) 
+library(foreign) 
+library(survey) 
+``` 
+
+## GENERAMOS UNA RUTA PARA GUARDAR NUESTROS DATOS 
+Una ruta hacia una carpeta donde almacenaremos los excel que se elaborarán posteriormente, que contarán con dataset de información construida. 
+```{r} 
+ruta <- "C:/Users/Trabajo/Desktop/RDATA" 
+``` 
+
+## CARGAR BASES DE DATOS
+Aseguremonos de trabajar con el modulo85-enaho01b-1. Atención al archivo número "1".
+```{r message=FALSE, warning=FALSE, rows.print=5} 
+choose.files()
+#goberna2018 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO 2021\\GOBERNABILIDAD - 759-Modulo85\\enaho01b-2021-1.dta")
+#goberna2019 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO 2021\\GOBERNABILIDAD - 759-Modulo85\\enaho01b-2021-1.dta")
+#goberna2020 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO 2021\\GOBERNABILIDAD - 759-Modulo85\\enaho01b-2021-1.dta")
+#goberna2021 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO 2021\\GOBERNABILIDAD - 759-Modulo85\\enaho01b-2021-1.dta")
+goberna2022 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\GOBERNABILIDAD - 759-Modulo85\\enaho01b-2022-1.dta")
+
+#sumaria2018 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SUMARIA - 759-Modulo34\\sumaria-2022.dta")
+#sumaria2019 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SUMARIA - 759-Modulo34\\sumaria-2022.dta")
+#sumaria2020 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SUMARIA - 759-Modulo34\\sumaria-2022.dta")
+#sumaria2021 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SUMARIA - 759-Modulo34\\sumaria-2022.dta")
+sumaria2022 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SUMARIA - 759-Modulo34\\sumaria-2022.dta")
+
+#educacion2018 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EDUACIÓN - 759-Modulo03\\enaho01a-2022-300.dta")
+#educacion2019 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EDUACIÓN - 759-Modulo03\\enaho01a-2022-300.dta")
+#educacion2020 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EDUACIÓN - 759-Modulo03\\enaho01a-2022-300.dta")
+#educacion2021 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EDUACIÓN - 759-Modulo03\\enaho01a-2022-300.dta")
+educacion2022 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EDUACIÓN - 759-Modulo03\\enaho01a-2022-300.dta")
+
+#salud2018 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SALUD - 759-Modulo04\\enaho01a-2022-400.dta")
+#salud2019 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SALUD - 759-Modulo04\\enaho01a-2022-400.dta")
+#salud2020 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SALUD - 759-Modulo04\\enaho01a-2022-400.dta")
+#salud2021 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SALUD - 759-Modulo04\\enaho01a-2022-400.dta")
+salud2022 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\SALUD - 759-Modulo04\\enaho01a-2022-400.dta")
+
+#empleo2018 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EMPLEO - 759-Modulo05\\enaho01a-2022-500.dta")
+#empleo2019 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EMPLEO - 759-Modulo05\\enaho01a-2022-500.dta")
+#empleo2020 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EMPLEO - 759-Modulo05\\enaho01a-2022-500.dta")
+#empleo2021 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EMPLEO - 759-Modulo05\\enaho01a-2022-500.dta")
+empleo2022 <- read_dta("C:\\Users\\Trabajo\\Desktop\\ENAHO\\EMPLEO - 759-Modulo05\\enaho01a-2022-500.dta")
+
+sumaria2022 <- subset(sumaria2022, select= c("conglome","hogar","vivienda","pobreza"))
+empleo2022 <- subset(empleo2022, select = c("codperso","conglome","vivienda","hogar","p558c")) 
+educacion2022 <- subset(educacion2022, select = c("codperso","conglome","vivienda","hogar","p300a"))
+salud2022 <- subset(salud2022, select = c("codperso","conglome","vivienda","hogar","p401h1","p401h2","p401h3","p401h4","p401h5","p401h6"))
+``` 
+
+## UNIÓN DE BASES DE DATOS
+```{r}
+enaho_inicial <- left_join(goberna2022, educacion2022, by=c("conglome","vivienda","hogar","codperso"))
+enaho_inicial2 <- left_join(enaho_inicial, salud2022, by=c("codperso","conglome","vivienda","hogar"))
+enaho_inicial3 <- left_join(enaho_inicial2, empleo2022, by=c("codperso","conglome","vivienda","hogar"))
+enaho_inicial4 <- left_join(enaho_inicial3, sumaria2022, by=c("conglome","vivienda","hogar"))
+enaho <- enaho_inicial4
+
+#HACEMOS UN FILTRO. MAYORES DE 18 AÑOS E INFORMANTES COMPLETOS
+enaho <- filter(enaho, p208_01>= 18 & codinfor!="00")
+```
+
+# ELABORACION DE VARIABLES PARA DESAGREGACIONES 
+## VARIABLES TRANSVERSALES 
+Aquellas variables que nos sirven para realizar las desagregaciones posteriores. 
+
+### VARIABLE SEXO
+```{r}
+enaho <- enaho %>% mutate(sexo = ifelse(p207_01==1,"hombre",
+                                        ifelse(p207_01==2,"Mujer",NA)))
+table(enaho$sexo)
+```
+### DEPARTAMENTOS 
+Hay que convertir la variable ubigeo.x (el ".x" es producto de la unión de bases de datos) a numérico para no encontrar problemas al momento de recodificar
+```{r} 
+enaho$ubigeonum <- as.numeric(enaho$ubigeo)
+enaho <- enaho %>%
+  mutate(regiones2 = 
+           ifelse(ubigeonum >= 010101 & ubigeonum <= 010707, "Amazonas",
+           ifelse(ubigeonum >= 020101 & ubigeonum <= 022008, "Ancash",
+           ifelse(ubigeonum >= 030101 & ubigeonum <= 030714, "Apurimac",
+           ifelse(ubigeonum >= 040101 & ubigeonum <= 040811, "Arequipa",
+           ifelse(ubigeonum >= 050101 & ubigeonum <= 051108, "Ayacucho",
+           ifelse(ubigeonum >= 060101 & ubigeonum <= 061311, "Cajamarca",
+           ifelse(ubigeonum >= 070101 & ubigeonum <= 070107, "Callao",
+           ifelse(ubigeonum >= 080101 & ubigeonum <= 081307, "Cusco",
+           ifelse(ubigeonum >= 090101 & ubigeonum <= 090723, "Huancavelica",
+           ifelse(ubigeonum >= 100101 & ubigeonum <= 101108, "Huanuco",
+           ifelse(ubigeonum >= 110101 & ubigeonum <= 110508, "Ica",
+           ifelse(ubigeonum >= 120101 & ubigeonum <= 120909, "Junin",
+           ifelse(ubigeonum >= 130101 & ubigeonum <= 131203, "La Libertad",
+           ifelse(ubigeonum >= 140101 & ubigeonum <= 140312, "Lambayeque",
+           ifelse(ubigeonum >= 150101 & ubigeonum <= 150143, "Lima Metropolitana",
+           ifelse(ubigeonum >= 150201 & ubigeonum <= 151033, "Lima Region",
+           ifelse(ubigeonum >= 160101 & ubigeonum <= 160804, "Loreto",
+           ifelse(ubigeonum >= 170101 & ubigeonum <= 170303, "Madre de Dios",
+           ifelse(ubigeonum >= 180101 & ubigeonum <= 180303, "Moquegua",
+           ifelse(ubigeonum >= 190101 & ubigeonum <= 190308, "Pasco",
+           ifelse(ubigeonum >= 200101 & ubigeonum <= 200806, "Piura",
+           ifelse(ubigeonum >= 210101 & ubigeonum <= 211307, "Puno",
+           ifelse(ubigeonum >= 220101 & ubigeonum <= 221005, "San Martín",
+           ifelse(ubigeonum >= 230101 & ubigeonum <= 230408, "Tacna",
+           ifelse(ubigeonum >= 240101 & ubigeonum <= 240304, "Tumbes",
+           ifelse(ubigeonum >= 250101 & ubigeonum <= 250401,"Ucayali",NA)))))))))))))))))))))))))))
+table(enaho$regiones2, useNA = "alw")
+``` 
+### REGIONES NATURALES
+```{r} 
+enaho <- enaho %>%
+  mutate(regnat = ifelse(dominio>=1 & dominio<=3 | dominio==8,"Costa",
+                         ifelse(dominio>=4 & dominio<=6,"Sierra",
+                                ifelse(dominio==7,"Selva",NA))))
+table(enaho$regnat, useNA = "alw")
+``` 
+### ÁREA URBANA/RURAL
+```{r} 
+enaho <- enaho %>%
+  mutate(area = ifelse((dominio==8 |
+                          (dominio>=1 & dominio<=7) &
+                          (estrato>=1 & estrato<=5)), "Urbano",
+                       ifelse(((dominio>=1 & dominio<=7) &
+                                 (estrato>=6 & estrato<=8)), "Rural", NA)))
+table(enaho$area, useNA = "alw")
+``` 
+### CONDICIÓN DE POBREZA 
+```{r} 
+enaho <- enaho %>%
+  mutate(pobreza3 = ifelse(pobreza==1, "Pobre extremo",
+                           ifelse(pobreza==2, "Pobre no extremo",
+                                  ifelse(pobreza==3, "No pobre", NA
+                                  ))))
+table(enaho$pobreza3, useNA = "alw")
+``` 
+### LENGUA MATERNA
+```{r}
+enaho <- enaho %>%
+  mutate(lengua = ifelse(p300a==4, "Castellano",
+                         ifelse(p300a==1 | p300a==2 | p300a==3, "Originaria", NA)))
+enaho$lengua <- as.factor(enaho$lengua)
+table(enaho$lengua, useNA = "alw")
+```
+### DISCAPACIDAD 
+```{r} 
+enaho <- enaho %>%
+  mutate(discapacidad =ifelse(p401h1==1|p401h2==1|p401h3==1|
+                                p401h4==1|p401h5==1|p401h6==1,1,0))
+table(enaho$discapacidad, useNA = "alw")
+``` 
+### ETNICIDAD 
+```{r} 
+enaho <- enaho %>%
+  mutate(defiet2 = case_when(
+    p558c == 1 ~ "Quechua",
+    p558c == 2 ~ "Aimara",
+    p558c == 3 ~ "Nativo o indigena de la Amazonia",
+    p558c == 4 ~ "Negro/Moreno/Zambo/Mulato/Pueblo Afro peruano o Afrodescendiente",
+    p558c == 5 ~ "Blanco",
+    p558c == 6 ~ "Mestizo",
+    p558c == 7 ~ "otro",
+    p558c == 8 ~ "No sabe/No responde",
+    p558c == 9 ~ "Nativo o indigena de la Amazonia",
+    TRUE ~ NA_character_
+  ))
+enaho$defiet2 <- as.factor(enaho$defiet2)
+table(enaho$defiet2, useNA = "alw")
+``` 
+## VARIABLES INDICADOR  
+### DISCRIMINACIÓN 
+```{r} 
+enaho <- enaho %>%
+  mutate(disc = ifelse(p22_1_01==1 | p22_1_02==1 | p22_1_03==1 
+                       | p22_1_04==1 | p22_1_05==1 
+                       | p22_1_06==1 | p22_1_07==1 | p22_1_08==1 
+                       | p22_1_09==1 | p22_1_10==1 | p22_1_11==1 
+                       | p22_1_12==1,"Sí me sentí discriminadX","No me sentí discriminadX"))
+enaho$disc <- as.factor(enaho$disc)
+table(enaho$disc, useNA="alw")
+``` 
+### VARIABLE JUVENTUD
+```{r} 
+enaho <- enaho %>% mutate(Juventud = ifelse(p208_01>=18 & p208_01<=29,"Jovenes","mayores a 29 años"))
+table(enaho$Juventud)
+``` 
+
+
+
+# PONDERACIÓN DE DATOS, DATASETS Y TRASLADO A EXCEL 
+## DISEÑO MUESTRAL
+Nota: en el 2021 el factor de ponderación usado es el facgob_p, sin embargo, en el 2022 solo está disponible el famiegob07.Antes de hacer las ponderaciones debemos quitar los datos perdidos del factor de ponderación.
+```{r} 
+enaho_limpio <- subset(enaho, !is.na(famiegob07))
+
+encuesta = svydesign(data=enaho_limpio, id=~conglome, strata=~estrato,
+                     weights=~famiegob07)
+``` 
+
+## DESAGREGACIÓN NACIONAL 
+```{r} 
+table(enaho$disc, enaho$Juventud, enaho$sexo)
+tabla0 <- svyby(~disc, ~Juventud, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla0
+ic0 <-as.table(confint(tabla0)) #INTERVALOS DE CONFIANZA
+ic0
+cv0 <-cv(tabla0) #COEFICIENTE DE VARIACIÓN
+cv0
+
+workbook <- createWorkbook()
+addWorksheet(workbook, sheetName = "Tabla 0")
+addWorksheet(workbook, sheetName = "IC 0")
+addWorksheet(workbook, sheetName = "CV 0")
+
+writeData(workbook, sheet = "Tabla 0", x = tabla0, colNames = TRUE)
+writeData(workbook, sheet = "IC 0", x = ic0, colNames = TRUE)
+writeData(workbook, sheet = "CV 0", x = cv0, colNames = TRUE)
+
+saveWorkbook(workbook, "datos0.xlsx")
+``` 
+
+## DESAGREGACIÓN SEGÚN SEXO
+```{r}
+tabla1 <- svyby(~disc, ~Juventud+sexo, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla1
+ic1 <-as.table(confint(tabla1)) #INTERVALOS DE CONFIANZA
+ic1
+cv1 <-cv(tabla1) #COEFICIENTE DE VARIACIÓN
+cv1
+
+workbook <- createWorkbook()
+addWorksheet(workbook, sheetName = "Tabla 1")
+addWorksheet(workbook, sheetName = "IC 1")
+addWorksheet(workbook, sheetName = "CV 1")
+
+writeData(workbook, sheet = "Tabla 1", x = tabla1, colNames = TRUE)
+writeData(workbook, sheet = "IC 1", x = ic1, colNames = TRUE)
+writeData(workbook, sheet = "CV 1", x = cv1, colNames = TRUE)
+
+saveWorkbook(workbook, "datos1.xlsx")
+```
+
+## DESAGREGACIÓN SEGÚN ÁREA DE DOMICILIO (RURAL / URBANA) 
+```{r} 
+tabla2 <- svyby(~disc, ~Juventud+area, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla2
+ic2 <-as.table(confint(tabla2)) #INTERVALOS DE CONFIANZA
+ic2
+cv2 <-cv(tabla2) #COEFICIENTE DE VARIACIÓN
+cv2
+
+workbook2 <- createWorkbook()
+addWorksheet(workbook2, sheetName = "Tabla 2")
+addWorksheet(workbook2, sheetName = "IC 2")
+addWorksheet(workbook2, sheetName = "CV 2")
+
+writeData(workbook2, sheet = "Tabla 2", x = tabla2, colNames = TRUE)
+writeData(workbook2, sheet = "IC 2", x = ic2, colNames = TRUE)
+writeData(workbook2, sheet = "CV 2", x = cv2, colNames = TRUE)
+
+saveWorkbook(workbook2, "datos2.xlsx")
+``` 
+
+## DESAGREGACIÓN SEGUN REGIÓN NATURAL (COSTA, SIERRA, SELVA) 
+```{r} 
+tabla3 <- svyby(~disc, ~Juventud+regnat, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla3
+ic3 <-as.table(confint(tabla3)) #INTERVALOS DE CONFIANZA
+ic3
+cv3 <-cv(tabla3) #COEFICIENTE DE VARIACIÓN
+cv3
+
+workbook3 <- createWorkbook()
+addWorksheet(workbook3, sheetName = "Tabla 3")
+addWorksheet(workbook3, sheetName = "IC 3")
+addWorksheet(workbook3, sheetName = "CV 3")
+
+writeData(workbook3, sheet = "Tabla 3", x = tabla3, colNames = TRUE)
+writeData(workbook3, sheet = "IC 3", x = ic3, colNames = TRUE)
+writeData(workbook3, sheet = "CV 3", x = cv3, colNames = TRUE)
+
+saveWorkbook(workbook3, "datos3.xlsx")
+``` 
+
+## DESAGREGACIÓN SEGÚN DEPARTAMENTOS 
+```{r} 
+tabla4 <- svyby(~disc, ~Juventud+regiones2, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla4
+ic4 <-as.table(confint(tabla4)) #INTERVALOS DE CONFIANZA
+ic4
+cv4 <-cv(tabla4) #COEFICIENTE DE VARIACIÓN
+cv4
+
+workbook4 <- createWorkbook()
+addWorksheet(workbook4, sheetName = "Tabla 4")
+addWorksheet(workbook4, sheetName = "IC 4")
+addWorksheet(workbook4, sheetName = "CV 4")
+
+writeData(workbook4, sheet = "Tabla 4", x = tabla4, colNames = TRUE)
+writeData(workbook4, sheet = "IC 4", x = ic4, colNames = TRUE)
+writeData(workbook4, sheet = "CV 4", x = cv4, colNames = TRUE)
+
+saveWorkbook(workbook4, "datos4.xlsx")
+``` 
+
+## DESAGREGACIÓN SEGUN CONDICIÓN DE POBREZA 
+```{r} 
+tabla5 <- svyby(~disc, ~Juventud+pobreza3, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla5
+ic5 <-as.table(confint(tabla5)) #INTERVALOS DE CONFIANZA
+ic5
+cv5 <-cv(tabla5) #COEFICIENTE DE VARIACIÓN
+cv5
+
+workbook5 <- createWorkbook()
+addWorksheet(workbook5, sheetName = "Tabla 5")
+addWorksheet(workbook5, sheetName = "IC 5")
+addWorksheet(workbook5, sheetName = "CV 5")
+
+writeData(workbook5, sheet = "Tabla 5", x = tabla5, colNames = TRUE)
+writeData(workbook5, sheet = "IC 5", x = ic5, colNames = TRUE)
+writeData(workbook5, sheet = "CV 5", x = cv5, colNames = TRUE)
+
+saveWorkbook(workbook5, "datos5.xlsx")
+``` 
+
+## DESAGREGACIÓN SEGUN DISCAPACIDAD 
+```{r}
+tabla6 <- svyby(~disc, ~Juventud+discapacidad, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO 
+tabla6
+ic6 <-as.table(confint(tabla6)) #INTERVALOS DE CONFIANZA 
+ic6
+cv6<-cv(tabla6) #COEFICIENTE DE VARIACIÓN 
+cv6
+
+workbook6 <- createWorkbook() 
+addWorksheet(workbook6, sheetName = "Tabla 6") 
+addWorksheet(workbook6, sheetName = "IC 6") 
+addWorksheet(workbook6, sheetName = "CV 6") 
+
+writeData(workbook6, sheet = "Tabla 6", x = tabla6, colNames = TRUE) 
+writeData(workbook6, sheet = "IC 6", x = ic6, colNames = TRUE) 
+writeData(workbook6, sheet = "CV 6", x = cv6, colNames = TRUE) 
+
+saveWorkbook(workbook6, "datos6.xlsx") 
+``` 
+
+## DESAGREGACIÓN SEGÚN ETNICIDAD 
+```{r} 
+tabla7 <- svyby(~disc, ~Juventud+defiet2, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla7 
+ic7 <-as.table(confint(tabla7)) #INTERVALOS DE CONFIANZA 
+ic7 
+cv7 <-cv(tabla7) #COEFICIENTE DE VARIACIÓN 
+cv7 
+
+workbook7 <- createWorkbook() 
+addWorksheet(workbook7, sheetName = "Tabla 7")
+addWorksheet(workbook7, sheetName = "IC 7")
+addWorksheet(workbook7, sheetName = "CV 7")
+
+writeData(workbook7, sheet = "Tabla 7", x = tabla7, colNames = TRUE)
+writeData(workbook7, sheet = "IC 7", x = ic7, colNames = TRUE)
+writeData(workbook7, sheet = "CV 7", x = cv7, colNames = TRUE)
+
+saveWorkbook(workbook7, "datos7.xlsx")
+``` 
+
+## DESAGREGACION SEGÚN LENGUA MATERNA
+```{r}
+tabla8 <- svyby(~disc, ~Juventud+lengua, encuesta, svymean, deff=F,na.rm=T) #PROMEDIO
+tabla8 
+ic8 <-as.table(confint(tabla8)) #INTERVALOS DE CONFIANZA 
+ic8 
+cv8 <-cv(tabla8) #COEFICIENTE DE VARIACIÓN 
+cv8 
+
+workbook8 <- createWorkbook() 
+addWorksheet(workbook8, sheetName = "Tabla 8")
+addWorksheet(workbook8, sheetName = "IC 8")
+addWorksheet(workbook8, sheetName = "CV 8")
+
+writeData(workbook8, sheet = "Tabla 8", x = tabla8, colNames = TRUE)
+writeData(workbook8, sheet = "IC 8", x = ic8, colNames = TRUE)
+writeData(workbook8, sheet = "CV 8", x = cv8, colNames = TRUE)
+
+saveWorkbook(workbook8, "datos8.xlsx")
+```
+
+
+# GUARDAR BD - opcional 
+```{r} 
+#save(enaho,file=paste(ruta,"BASEDEDATOSIndicador1ENDES.RData",sep = "/")) 
+#BORRAMOS TODO MENOS "RUTA" 
+#rm(list=setdiff(ls(), c("ruta"))) 
+#VOLVEMOS A CARGAR NUESTRA BD LIMPIA 
+#load(paste(ruta,"BASEDEDATOSIndicador1ENDES.RData",sep="/"))
